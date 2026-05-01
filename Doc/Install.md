@@ -174,10 +174,15 @@ Le DNS Sinkholing via Pi-hole permet de transformer la Gateway en un bouclier co
 
 Le service est intégré directement dans la stack `docker-compose.yml`. Cela permet une communication inter-conteneurs optimisée via le réseau virtuel `vpn_net`.
 
-> **Important** : Avant de lancer le conteneur, veillez à adapter les variables d'environnement (mots de passe, fuseau horaire, IP) à votre configuration personnelle.
+> **Important** : Avant de lancer le conteneur, copiez le fichier d'exemple et adaptez les variables d'environnement (mots de passe, IP, etc.) :
+> ```bash
+> cp Service/.env.example Service/.env
+> nano Service/.env
+> ```
 
 ```bash
-# Lancement de Pi-hole
+# Lancement de la stack (WireGuard + Pi-hole)
+cd Service
 docker compose up -d
 ```
 
@@ -214,3 +219,4 @@ sudo ufw reload
 **Test de blocage** : Connectez un client au VPN et consultez le **"Query Log"** sur l'interface Pi-hole. Vous devriez voir les requêtes de télémétrie ou de publicité apparaître en rouge (statut *Blocked*).
 
 > **Note sur les limites** : Le blocage DNS est inopérant contre les publicités servies par le même domaine que le contenu principal (ex: publicités injectées directement dans le flux vidéo de YouTube). Pour ces cas, une extension de navigateur reste nécessaire en complément.
+t dans le flux vidéo de YouTube). Pour ces cas, une extension de navigateur reste nécessaire en complément.

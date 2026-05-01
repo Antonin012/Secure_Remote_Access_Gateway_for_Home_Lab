@@ -3,21 +3,35 @@
 ![Statut](https://img.shields.io/badge/Statut-Actif-success)
 ![Sécurité](https://img.shields.io/badge/Sécurité-Renforcée-blue)
 ![OS](https://img.shields.io/badge/OS-Debian%2012-BD2A2E?logo=debian)
-![Bash](https://img.shields.io/badge/GNU_BASH-5.3-9AEBA3?logo=gnubash)
-![Docker](https://img.shields.io/badge/Docker-28.5-13678A?logo=docker)
-![Pi-Hole](https://img.shields.io/badge/Pi_Hole-6.4.2-89679C?logo=Pi-Hole)
+![Docker](https://img.shields.io/badge/Docker-27.5-13678A?logo=docker)
+![WireGuard](https://img.shields.io/badge/WireGuard-v1.0-881717?logo=wireguard)
+![Pi-Hole](https://img.shields.io/badge/Pi_Hole-2025.02-89679C?logo=Pi-Hole)
 
 ## Présentation du Projet
 
 Ce projet documente la mise en place d'une passerelle d'accès à distance sécurisée (Secure Remote Access Gateway) pour un Home Lab. L'objectif principal est de permettre un accès chiffré et sécurisé aux services hébergés localement (Nextcloud, Lab de Pentest, etc.) depuis l'extérieur, sans jamais exposer ces services directement sur l'Internet public.
 
-Face aux menaces constantes et aux scans automatisés sur le web, la stratégie adoptée repose sur une réduction maximale de la surface d'attaque en utilisant un **VPN (Virtual Private Network)** couplé à des règles de pare-feu strictes et une protection proactive.
+## Prérequis
+
+Avant de commencer, assurez-vous de disposer des éléments suivants :
+- Un serveur sous **Debian 12** (ou autre distribution Linux stable).
+- **Docker** et **Docker Compose** installés.
+- Un accès à l'interface de votre routeur pour rediriger le port **UDP 51820**.
+- Une IP publique statique ou un service de DNS dynamique (DDNS).
 
 ## Architecture et Fonctionnement
 
 Le système est conçu autour du principe du moindre privilège et d'une politique de sécurité "Default Deny". 
 
 ![Diagramme de l'Architecture](./Doc/res/DiagrammeVPN.png)
+
+## Durcissement du Système Hôte (Hardening)
+
+Pour garantir la sécurité de la passerelle, les mesures suivantes sont appliquées sur le serveur Debian :
+- **Pare-feu (UFW)** : Politique par défaut à `deny`. Seuls les ports VPN et SSH (port personnalisé) sont ouverts.
+- **Fail2Ban** : Protection contre le brute-force avec bannissement automatique des IPs suspectes.
+- **Sécurisation SSH** : Désactivation de l'authentification par mot de passe, utilisation de clés Ed25519 uniquement, et changement du port par défaut.
+- **Mises à jour automatiques** : Installation du paquet `unattended-upgrades` pour garantir que les patchs de sécurité sont appliqués quotidiennement.
 
 ### Composants Clés :
 - **Ingress Routeur** : Redirige uniquement le trafic UDP nécessaire vers la Gateway Debian.
