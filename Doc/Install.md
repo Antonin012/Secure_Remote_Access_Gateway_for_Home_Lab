@@ -1,4 +1,4 @@
-# Secure Remote Access Gateway for Home Lab
+# Secure DNS & VPN Gateway
 
 ## 1. Pourquoi mettre en place un VPN pour accéder à son homelab ? 
 Aujourd’hui, face à la multiplication des cyberattaques, nos réseaux domestiques sont constamment ciblés par des scanners automatisés à la recherche de vulnérabilités. Afin de protéger mon infrastructure et de réduire ma **surface d’exposition**, j'ai choisi d'implémenter un **VPN (Virtual Private Network)**. Cette solution me permet d'accéder à mes ressources locales de manière sécurisée et chiffrée, sans jamais exposer mes services directement sur l'Internet public.
@@ -9,11 +9,12 @@ Aujourd’hui, face à la multiplication des cyberattaques, nos réseaux domesti
 | WireGuard | Tunnel VPN | [Documentation Tunnel (CloudFlare)](https://www.cloudflare.com/fr-fr/learning/network-layer/what-is-tunneling/)
 | UFW | Pare-Feu | [Documentation Pare-Feu (Blog)](https://blog.stephane-robert.info/docs/securiser/reseaux/ufw/)|
 | Fail2Ban | Protection Brute-Force | [Documentation Brute-Force (Fail2Ban ENG)](https://fail2ban.readthedocs.io/en/latest/)|
-| Docker (Optionnel) | Déploiement | [Documentation Déploiement (Docker ENG)](https://docs.docker.com/) |
+| Docker | Déploiement | [Documentation Déploiement (Docker ENG)](https://docs.docker.com/) |
+| Pi-Hole | Dns SinkHole | [Utilisation Pi-Hole](https://pi-hole.net/)
 
 ## 3. Exemple d'architecture
 
-![Image](./res/DiagrammeVPN.jpg)
+![Image](./res/DiagrammeVPN.png)
 
 ### Description de l'architecture :
 
@@ -164,3 +165,52 @@ Pour garantir l'anonymat et la sécurité, j'ai vérifié que mes requêtes DNS 
 - Outil : dnsleaktest.com
 
 - Résultat : Seuls les serveurs DNS configurés dans Pi-VPN (ex: Cloudflare ou Unbound) sont visibles.
+
+## 7. Installation et intégration de Pi-hole
+
+Le DNS Sinkholing via Pi-hole permet de transformer la Gateway en un bouclier contre la publicité et les domaines malveillants au niveau réseau.
+
+### 7.1 Déploiement via Docker Compose
+
+Le service est intégré directement dans la stack `docker-compose.yml`. Cela permet une communication inter-conteneurs optimisée via le réseau virtuel `vpn_net`.
+
+> **Important** : Avant de lancer le conteneur, veillez à adapter les variables d'environnement (mots de passe, fuseau horaire, IP) à votre configuration personnelle.
+
+```bash
+# Lancement de Pi-hole
+docker compose up -d
+```
+
+### 7.2 Liaison entre WireGuard et Pi-hole
+
+Pour que les clients VPN bénéficient du filtrage, nous forçons le paramètre DNS des profils clients vers l'IP statique du conteneur Pi-hole définie dans le réseau Docker.
+
+- Configuration Docker : Dans le fichier compose, la variable `PEERDNS` du service WireGuard doit pointer vers l'IP interne du Pi-hole : `10.0.0.53`.
+- Alternative (LAN) : Si vous souhaitez que vos machines locales (hors VPN) utilisent aussi le filtrage, configurez leur DNS sur l'IP locale de votre Debian (ex: `192.168.1.50`).
+
+### 7.3 Configuration du Pare-feu (UFW)
+
+Il est impératif d'autoriser les requêtes DNS (port 53) provenant de l'interface virtuelle du VPN (`wg0`) :
+
+```bash
+# Autoriser le trafic DNS sur l'interface WireGuard
+sudo ufw allow in on wg0 to any port 53
+sudo ufw reload
+```
+
+7.4 Validation du filtrage
+
+- Interface Web :
+
+    - Via le réseau local : http://<IP_DEBIAN>:8080/admin/
+
+    - Via le tunnel VPN : [http://10.0.0.53/admin/](http://10.0.0.53/admin/)
+
+- Réinitialisation du mot de passe : Si le mot de passe défini en variable d'environnement n'est pas reconnu, forcez-le avec :
+    ```bash
+    docker exec -it pihole-dns pihole -a -p
+    ```
+
+**Test de blocage** : Connectez un client au VPN et consultez le **"Query Log"** sur l'interface Pi-hole. Vous devriez voir les requêtes de télémétrie ou de publicité apparaître en rouge (statut *Blocked*).
+
+> **Note sur les limites** : Le blocage DNS est inopérant contre les publicités servies par le même domaine que le contenu principal (ex: publicités injectées directement dans le flux vidéo de YouTube). Pour ces cas, une extension de navigateur reste nécessaire en complément.

@@ -9,18 +9,43 @@ services:
       - PUID=1000
       - PGID=1000
       - TZ=Europe/Paris
-      - SERVERURL=X.X.X.X # L'ip de votre Routeur
+      - SERVERURL=X.X.X.X # Ton IP Publique
       - SERVERPORT=51820
-      - PEERS=1 # Nombre de clients à générer
-      - PEERDNS=auto
+      - PEERS=1
+      - PEERDNS=10.0.0.53  # <--- TRÈS IMPORTANT : On pointe vers l'IP du Pi-hole
       - INTERNAL_SUBNET=10.13.13.0
-      - ALLOWEDIPS=0.0.0.0/0 # Pour tout faire passer par le VPN
+      - ALLOWEDIPS=0.0.0.0/0
     volumes:
       - ./config:/config
-      - /lib/modules:/lib/modules # Nécessaire pour le noyau WireGuard
+      - /lib/modules:/lib/modules
     ports:
       - 51820:51820/udp
     sysctls:
       - net.ipv4.conf.all.src_valid_mark=1
       - net.ipv4.ip_forward=1
+    networks:
+      vpn_net:
+        ipv4_address: 10.0.0.2 # On donne une IP fixe à WireGuard dans le réseau Docker
     restart: unless-stopped
+
+  pihole:
+    image: pihole/pihole:latest
+    container_name: pihole-dns
+    environment:
+      - TZ=Europe/Paris
+      - WEBPASSWORD=motdepassesecur # Ton mot de passe admin
+    volumes:
+      - ./etc-pihole:/etc/pihole
+      - ./etc-dnsmasq.d:/etc/dnsmasq.d
+    ports:
+      - "8080:80/tcp" # Pour accéder à l'interface de Pi-hole (http://IP_DEBIAN:8080/admin)
+    networks:
+      vpn_net:
+        ipv4_address: 10.0.0.53 # IP fixe pour Pi-hole
+    restart: unless-stopped
+
+networks:
+  vpn_net:
+    ipam:
+      config:
+        - subnet: 10.0.0.0/24

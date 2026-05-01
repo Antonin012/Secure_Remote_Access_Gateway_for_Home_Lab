@@ -1,12 +1,11 @@
-# Secure Remote Access Gateway for Home Lab
+# Secure DNS & VPN Gateway
 
 ![Statut](https://img.shields.io/badge/Statut-Actif-success)
 ![Sécurité](https://img.shields.io/badge/Sécurité-Renforcée-blue)
 ![OS](https://img.shields.io/badge/OS-Debian%2012-BD2A2E?logo=debian)
 ![Bash](https://img.shields.io/badge/GNU_BASH-5.3-9AEBA3?logo=gnubash)
-![OS](https://img.shields.io/badge/Docker-28.5-13678A?logo=docker)
-
-
+![Docker](https://img.shields.io/badge/Docker-28.5-13678A?logo=docker)
+![Pi-Hole](https://img.shields.io/badge/Pi_Hole-6.4.2-89679C?logo=Pi-Hole)
 
 ## Présentation du Projet
 
@@ -18,7 +17,7 @@ Face aux menaces constantes et aux scans automatisés sur le web, la stratégie 
 
 Le système est conçu autour du principe du moindre privilège et d'une politique de sécurité "Default Deny". 
 
-![Diagramme de l'Architecture](./Doc/res/DiagrammeVPN.jpg)
+![Diagramme de l'Architecture](./Doc/res/DiagrammeVPN.png)
 
 ### Composants Clés :
 - **Ingress Routeur** : Redirige uniquement le trafic UDP nécessaire vers la Gateway Debian.
@@ -40,6 +39,10 @@ Toutes les étapes détaillées pour reproduire cette infrastructure de sécurit
 4. Mise en place du pare-feu (UFW) et de la protection active (Fail2Ban).
 5. Sécurisation du SSH et gestion des accès clients distants.
 6. Phase d'audits et de tests.
+
+## Évolutions et Sécurité Avancée
+
+J'ai décider d'ajouter un **DNS Sinkhole (Pi-Hole)** pour limiter l'affichage de pubs sur internet et limiter les traqueurs au niveau réseau
 
 ## Sécurité et Validation
 
